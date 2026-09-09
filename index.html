@@ -419,7 +419,7 @@ function renderBoardRows(board){
       <th style="padding:12px">B. Indonesia</th>
       <th style="padding:12px">Matematika</th>
       <th style="padding:12px">Total</th>
-      <th style="padding:12px">Tanggal & Jam</th>
+      <th style="padding:12px">Tanggal & Jam (WIB)</th>
     </tr></thead>
     <tbody>${board.map((x,i)=>`
       <tr style="border-bottom:1px solid #dcecf5">
@@ -429,7 +429,7 @@ function renderBoardRows(board){
         <td style="padding:12px;text-align:center">${Number(x.indo)||0}/10</td>
         <td style="padding:12px;text-align:center">${Number(x.mtk)||0}/10</td>
         <td style="padding:12px;text-align:center"><b>${Number(x.total)||0}/20</b></td>
-        <td style="padding:12px;text-align:center;white-space:nowrap">${escapeHtml(String(x.completedAt||'-'))}</td>
+        <td style="padding:12px;text-align:center;white-space:nowrap">${escapeHtml(String(x.timestamp || x.completedAt || '-'))}</td>
       </tr>`).join('')}</tbody></table></div>`;
 }
 
