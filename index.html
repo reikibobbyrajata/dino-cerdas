@@ -356,16 +356,51 @@ async function saveOnlineResult(){
 async function loadOnlineLeaderboard(){
   const box=document.getElementById('leaderboardTable');
   if(!box) return;
-  box.innerHTML='<div class="result">⏳ Memuat leaderboard kelas...</div><iframe id="dinoLeaderboardFrame" title="Leaderboard Dino Cerdas" style="width:100%;min-height:430px;border:0;border-radius:14px;display:block;margin-top:8px;background:white;" loading="lazy"></iframe>';
-  const frame=document.getElementById('dinoLeaderboardFrame');
-  frame.src=ONLINE_API_URL+"?action=leaderboard_page&t="+Date.now();
-  frame.onload=function(){
-    const loading=box.querySelector('.result');
-    if(loading) loading.style.display='none';
+
+  box.innerHTML='<div class="result">⏳ Memuat leaderboard kelas...</div>';
+
+  // Gunakan JSONP agar pembacaan data kompatibel dengan Chrome Android,
+  // iPhone, dan GitHub Pages tanpa masalah CORS.
+  const old=document.getElementById('dinoLeaderboardJsonp');
+  if(old) old.remove();
+
+  const callbackName='dinoLeaderboardCallback_'+Date.now();
+  let finished=false;
+
+  window[callbackName]=function(data){
+    finished=true;
+    try{
+      renderBoardRows(data);
+    }catch(e){
+      box.innerHTML='<div class="result">⚠️ Data leaderboard tidak dapat ditampilkan.</div>';
+    }
+    cleanup();
   };
-  frame.onerror=function(){
-    box.innerHTML='<div class="result">⚠️ Leaderboard online belum dapat dimuat. Silakan muat ulang halaman.</div>';
+
+  const script=document.createElement('script');
+  script.id='dinoLeaderboardJsonp';
+  script.async=true;
+  script.src=ONLINE_API_URL+'?action=leaderboard&callback='+encodeURIComponent(callbackName)+'&t='+Date.now();
+
+  script.onerror=function(){
+    if(finished) return;
+    box.innerHTML='<div class="result">⚠️ Leaderboard online belum dapat dimuat. Periksa koneksi internet.</div>';
+    cleanup();
   };
+
+  document.body.appendChild(script);
+
+  const timer=setTimeout(function(){
+    if(finished) return;
+    box.innerHTML='<div class="result">⚠️ Leaderboard belum merespons. Tekan 🔄 Muat Ulang.</div>';
+    cleanup();
+  },10000);
+
+  function cleanup(){
+    clearTimeout(timer);
+    if(script.parentNode) script.parentNode.removeChild(script);
+    try{delete window[callbackName];}catch(e){window[callbackName]=undefined;}
+  }
 }
 
 function renderBoardRows(board){
