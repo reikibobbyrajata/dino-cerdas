@@ -356,36 +356,16 @@ async function saveOnlineResult(){
 async function loadOnlineLeaderboard(){
   const box=document.getElementById('leaderboardTable');
   if(!box) return;
-  if(!ONLINE_API_URL || ONLINE_API_URL.startsWith("TEMPEL_")){
-    renderLeaderboard();
-    return;
-  }
-
-  box.innerHTML='<div class="result">⏳ Memuat leaderboard kelas...</div>';
-
-  // JSONP: menghindari masalah CORS ketika HTML dibuka dari file:// atau hosting lain.
-  const callbackName="dinoLeaderboard_"+Date.now();
-  const script=document.createElement("script");
-
-  window[callbackName]=function(board){
-    try{
-      renderBoardRows(Array.isArray(board)?board:[]);
-    }catch(e){
-      box.innerHTML='<div class="result">⚠️ Data leaderboard tidak dapat ditampilkan.</div>';
-    }finally{
-      delete window[callbackName];
-      script.remove();
-    }
+  box.innerHTML='<div class="result">⏳ Memuat leaderboard kelas...</div><iframe id="dinoLeaderboardFrame" title="Leaderboard Dino Cerdas" style="width:100%;min-height:430px;border:0;border-radius:14px;display:block;margin-top:8px;background:white;" loading="lazy"></iframe>';
+  const frame=document.getElementById('dinoLeaderboardFrame');
+  frame.src=ONLINE_API_URL+"?action=leaderboard_page&t="+Date.now();
+  frame.onload=function(){
+    const loading=box.querySelector('.result');
+    if(loading) loading.style.display='none';
   };
-
-  script.onerror=function(){
-    delete window[callbackName];
-    script.remove();
-    box.innerHTML='<div class="result">⚠️ Leaderboard online belum dapat dimuat. Periksa deployment Apps Script.</div>';
+  frame.onerror=function(){
+    box.innerHTML='<div class="result">⚠️ Leaderboard online belum dapat dimuat. Silakan muat ulang halaman.</div>';
   };
-
-  script.src=ONLINE_API_URL+"?action=leaderboard&callback="+encodeURIComponent(callbackName)+"&_="+Date.now();
-  document.body.appendChild(script);
 }
 
 function renderBoardRows(board){
